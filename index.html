@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TierCraft // Custom Tier List Generator</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-glow: rgba(255, 255, 255, 0.03);
+            
+            /* Tier Colors (Apple-inspired vibrant vibrant gradients) */
+            --s-tier: linear-gradient(135deg, #ff416c, #ff4b2b);
+            --a-tier: linear-gradient(135deg, #ff9f0a, #ffd60a);
+            --b-tier: linear-gradient(135deg, #30d158, #34c759);
+            --c-tier: linear-gradient(135deg, #0a84ff, #007aff);
+            --d-tier: linear-gradient(135deg, #bf5af2, #af52de);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.05rem;
+            background: linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: #8e8e93;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        main {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Glassmorphism utility card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            padding: 1.5rem;
+        }
+
+        /* Tier List Board Container */
+        .tier-board {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow: hidden;
+        }
+
+        /* Tier Row */
+        .tier-row {
+            display: flex;
+            min-height: 90px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border 0.3s ease;
+        }
+
+        .tier-row.drag-over {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Tier Label Left Side */
+        .tier-label {
+            width: 100px;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            user-select: none;
+        }
+
+        .tier-s { background: var(--s-tier); }
+        .tier-a { background: var(--a-tier); }
+        .tier-b { background: var(--b-tier); }
+        .tier-c { background: var(--c-tier); }
+        .tier-d { background: var(--d-tier); }
+
+        /* Tier Bench/Dropzone Right Side */
+        .tier-dropspace {
+            flex-grow: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            align-content: center;
+        }
+
+        /* Control Panel */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-section h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Input Styles */
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Button Customizations */
+        button {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        /* File Upload Styling */
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed var(--glass-border);
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+
+        .file-label:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Draggable Items Pool */
+        .pool-section {
+            min-height: 120px;
+        }
+
+        .item-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            min-height: 80px;
+            padding: 0.5rem;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        /* Tier Elements (Images or Text Cards) */
+        .tier-item {
+            height: 70px;
+            width: 70px;
+            border-radius: 12px;
+            cursor: grab;
+            user-select: none;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tier-item:active {
+            cursor: grabbing;
+        }
+
+        .tier-item.text-item {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+            border: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 500;
+            word-break: break-word;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .tier-item.image-item {
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Delete Button on Hovering Items */
+        .tier-item .delete-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ff453a;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-weight: bold;
+        }
+
+        .tier-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>TierCraft</h1>
+        <p>Rank your favorites with precision and clean aesthetics.</p>
+    </header>
+
+    <main>
+        <div class="glass-card tier-board">
+            <div class="tier-row" data-tier="S">
+                <div class="tier-label tier-s">S</div>
+                <div class="tier-dropspace" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
+            </div>
+            <div class="tier-row" data-tier="A">
+                <div class="tier-label tier-a">A</div>
+                <div class="tier-dropspace" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
+            </div>
+            <div class="tier-row" data-tier="B">
+                <div class="tier-label tier-b">B</div>
+                <div class="tier-dropspace" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
+            </div>
+            <div class="tier-row" data-tier="C">
+                <div class="tier-label tier-c">C</div>
+                <div class="tier-dropspace" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
+            </div>
+            <div class="tier-row" data-tier="D">
+                <div class="tier-label tier-d">D</div>
+                <div class="tier-dropspace" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
+            </div>
+        </div>
+
+        <div class="glass-card controls">
+            <div class="control-section">
+                <h2><span>✍️</span> Add Text Item</h2>
+                <div class="input-group">
+                    <input type="text" id="text-input" placeholder="Type label..." maxlength="30" onkeydown="if(event.key === 'Enter') addTextItem()">
+                    <button onclick="addTextItem()">Add</button>
+                </div>
+            </div>
+            <div class="control-section">
+                <h2><span>🖼️</span> Add Images</h2>
+                <label class="file-label">
+                    <span>Choose Images / Photos</span>
+                    <input type="file" id="image-input" accept="image/*" multiple onchange="addImageItems(event)">
+                </label>
+            </div>
+        </div>
+
+        <div class="glass-card pool-section">
+            <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #8e8e93;">Staging Area</h2>
+            <div class="item-pool" id="item-pool" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
+        </div>
+    </main>
+
+    <script>
+        let itemCount = 0;
+
+        // Generate unique IDs for dropped items
+        function getUniqueId() {
+            return 'item-' + itemCount++;
+        }
+
+        // Add text item to the pool
+        function addTextItem() {
+            const input = document.getElementById('text-input');
+            const value = input.value.trim();
+            
+            if (!value) return;
+
+            const item = document.createElement('div');
+            item.classList.add('tier-item', 'text-item');
+            item.setAttribute('draggable', 'true');
+            item.setAttribute('id', getUniqueId());
+            item.innerText = value;
+
+            addDeleteCapability(item);
+            setupDragEvents(item);
+
+            document.getElementById('item-pool').appendChild(item);
+            input.value = '';
+        }
+
+        // Add image items to the pool
+        function addImageItems(event) {
+            const files = event.target.files;
+            if (!files) return;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const item = document.createElement('div');
+                    item.classList.add('tier-item', 'image-item');
+                    item.setAttribute('draggable', 'true');
+                    item.setAttribute('id', getUniqueId());
+                    item.style.backgroundImage = `url('${e.target.result}')`;
+
+                    addDeleteCapability(item);
+                    setupDragEvents(item);
+
+                    document.getElementById('item-pool').appendChild(item);
+                }
+                reader.readAsDataURL(file);
+            });
+            
+            // Clear input value to let users re-upload same files if deleted
+            event.target.value = '';
+        }
+
+        // Add deletion attachment
+        function addDeleteCapability(item) {
+            const deleteBtn = document.createElement('div');
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.innerHTML = '✕';
+            deleteBtn.onclick = function(e) {
+                e.stopPropagation(); // Avoid triggering any item event
+                item.remove();
+            };
+            item.appendChild(deleteBtn);
+        }
+
+        // Setup individual drag events for items
+        function setupDragEvents(item) {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item.id);
+                setTimeout(() => item.style.opacity = '0.4', 0);
+            });
+
+            item.addEventListener('dragend', () => {
+                item.style.opacity = '1';
+                // Clean up any lingering drag-over states on rows
+                document.querySelectorAll('.tier-row').forEach(row => row.classList.remove('drag-over'));
+            });
+        }
+
+        // Drag and Drop Zone functions
+        function allowDrop(e) {
+            e.preventDefault();
+            const dropzone = e.target.closest('.tier-dropspace') || e.target.closest('.item-pool');
+            if (dropzone) {
+                const row = dropzone.closest('.tier-row');
+                if (row) row.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave(e) {
+            const row = e.target.closest('.tier-row');
+            // Logic avoids flickering when moving over child items inside the drop container
+            if (row && e.relatedTarget && !row.contains(e.relatedTarget)) {
+                row.classList.remove('drag-over');
+            }
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggedElement = document.getElementById(id);
+            
+            // Target dropspace or fallback to item pool
+            const dropzone = e.target.closest('.tier-dropspace') || e.target.closest('.item-pool');
+            
+            if (dropzone && draggedElement) {
+                dropzone.appendChild(draggedElement);
+            }
+
+            const row = e.target.closest('.tier-row');
+            if (row) row.classList.remove('drag-over');
+        }
+    </script>
+</body>
+</html>

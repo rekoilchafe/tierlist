@@ -11,7 +11,7 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             --glass-glow: rgba(255, 255, 255, 0.03);
             
-            /* Tier Colors (Apple-inspired vibrant vibrant gradients) */
+            /* Tier Colors (Apple-inspired vibrant gradients) */
             --s-tier: linear-gradient(135deg, #ff416c, #ff4b2b);
             --a-tier: linear-gradient(135deg, #ff9f0a, #ffd60a);
             --b-tier: linear-gradient(135deg, #30d158, #34c759);
@@ -132,6 +132,22 @@
             align-content: center;
         }
 
+        /* Draggable Items Pool / Staging Area */
+        .pool-section {
+            min-height: 120px;
+        }
+
+        .item-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            min-height: 80px;
+            padding: 0.5rem;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
         /* Control Panel */
         .controls {
             display: grid;
@@ -224,22 +240,6 @@
 
         input[type="file"] {
             display: none;
-        }
-
-        /* Draggable Items Pool */
-        .pool-section {
-            min-height: 120px;
-        }
-
-        .item-pool {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            min-height: 80px;
-            padding: 0.5rem;
-            border-radius: 14px;
-            background: rgba(0, 0, 0, 0.15);
-            border: 1px dashed rgba(255, 255, 255, 0.05);
         }
 
         /* Tier Elements (Images or Text Cards) */
@@ -341,6 +341,11 @@
             </div>
         </div>
 
+        <div class="glass-card pool-section">
+            <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #8e8e93;">Staging Area</h2>
+            <div class="item-pool" id="item-pool" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
+        </div>
+
         <div class="glass-card controls">
             <div class="control-section">
                 <h2><span>✍️</span> Add Text Item</h2>
@@ -357,22 +362,15 @@
                 </label>
             </div>
         </div>
-
-        <div class="glass-card pool-section">
-            <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #8e8e93;">Staging Area</h2>
-            <div class="item-pool" id="item-pool" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"></div>
-        </div>
     </main>
 
     <script>
         let itemCount = 0;
 
-        // Generate unique IDs for dropped items
         function getUniqueId() {
             return 'item-' + itemCount++;
         }
 
-        // Add text item to the pool
         function addTextItem() {
             const input = document.getElementById('text-input');
             const value = input.value.trim();
@@ -392,7 +390,6 @@
             input.value = '';
         }
 
-        // Add image items to the pool
         function addImageItems(event) {
             const files = event.target.files;
             if (!files) return;
@@ -414,23 +411,20 @@
                 reader.readAsDataURL(file);
             });
             
-            // Clear input value to let users re-upload same files if deleted
             event.target.value = '';
         }
 
-        // Add deletion attachment
         function addDeleteCapability(item) {
             const deleteBtn = document.createElement('div');
             deleteBtn.classList.add('delete-btn');
             deleteBtn.innerHTML = '✕';
             deleteBtn.onclick = function(e) {
-                e.stopPropagation(); // Avoid triggering any item event
+                e.stopPropagation();
                 item.remove();
             };
             item.appendChild(deleteBtn);
         }
 
-        // Setup individual drag events for items
         function setupDragEvents(item) {
             item.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', item.id);
@@ -439,12 +433,10 @@
 
             item.addEventListener('dragend', () => {
                 item.style.opacity = '1';
-                // Clean up any lingering drag-over states on rows
                 document.querySelectorAll('.tier-row').forEach(row => row.classList.remove('drag-over'));
             });
         }
 
-        // Drag and Drop Zone functions
         function allowDrop(e) {
             e.preventDefault();
             const dropzone = e.target.closest('.tier-dropspace') || e.target.closest('.item-pool');
@@ -456,7 +448,6 @@
 
         function dragLeave(e) {
             const row = e.target.closest('.tier-row');
-            // Logic avoids flickering when moving over child items inside the drop container
             if (row && e.relatedTarget && !row.contains(e.relatedTarget)) {
                 row.classList.remove('drag-over');
             }
@@ -467,7 +458,6 @@
             const id = e.dataTransfer.getData('text/plain');
             const draggedElement = document.getElementById(id);
             
-            // Target dropspace or fallback to item pool
             const dropzone = e.target.closest('.tier-dropspace') || e.target.closest('.item-pool');
             
             if (dropzone && draggedElement) {

@@ -89,7 +89,7 @@
         /* Tier Row */
         .tier-row {
             display: flex;
-            min-height: 130px; /* Increased to fit larger thumbnails cleanly */
+            min-height: 90px;
             background: rgba(255, 255, 255, 0.01);
             border: 1px solid rgba(255, 255, 255, 0.04);
             border-radius: 16px;
@@ -104,12 +104,12 @@
 
         /* Tier Label Left Side */
         .tier-label {
-            width: 110px;
-            min-width: 110px;
+            width: 100px;
+            min-width: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #ffffff;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -127,7 +127,7 @@
             flex-grow: 1;
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 0.5rem;
             padding: 0.75rem;
             align-content: center;
         }
@@ -140,7 +140,7 @@
         .item-pool {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 1rem;
             min-height: 110px;
             padding: 0.75rem;
             border-radius: 14px;
@@ -242,16 +242,22 @@
             display: none;
         }
 
-        /* Larger Tier Elements (Images or Text Cards) */
+        /* Tier Elements (Images or Text Cards) */
         .tier-item {
-            height: 110px; /* Increased from 70px */
-            width: 110px;  /* Increased from 70px */
-            border-radius: 16px;
+            height: 70px;
+            width: 70px;
+            border-radius: 12px;
             cursor: grab;
             user-select: none;
             position: relative;
             animation: fadeIn 0.3s ease;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: width 0.2s ease, height 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Target items ONLY when they live inside the staging area */
+        .item-pool .tier-item {
+            height: 110px;
+            width: 110px;
         }
 
         .tier-item:active {
@@ -264,12 +270,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0.75rem;
+            padding: 0.5rem;
             text-align: center;
-            font-size: 0.95rem; /* Marginally bigger font for readability */
+            font-size: 0.8rem;
             font-weight: 500;
             word-break: break-word;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Scale typography up cleanly in the larger staging area cards */
+        .item-pool .tier-item.text-item {
+            font-size: 0.95rem;
+            padding: 0.75rem;
         }
 
         .tier-item.image-item {
@@ -287,9 +299,9 @@
             background: #ff453a;
             color: white;
             border-radius: 50%;
-            width: 22px; /* Slightly scaled up for easier tapping */
-            height: 22px;
-            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -438,7 +450,6 @@
             });
         }
 
-        // Drag and Drop core logic
         function allowDrop(e) {
             e.preventDefault();
             const dropzone = e.target.closest('.tier-dropspace') || e.target.closest('.item-pool');
